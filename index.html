@@ -3,54 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Playlist TV LG - Otimizada</title>
+    <title>Playlist TV LG - Final</title>
     <style>
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: #000; overflow: hidden; font-family: sans-serif; 
+            background: #000; overflow: hidden; font-family: sans-serif; color: white;
         }
-        /* Garantindo que o vídeo preencha a tela sem distorcer */
-        video { 
-            width: 100vw; 
-            height: 100vh; 
-            object-fit: contain; 
-            background: #000;
-        }
+        video { width: 100vw; height: 100vh; object-fit: contain; background: #000; }
         
         .controls { 
             position: absolute; top: 20px; right: 20px; z-index: 10; 
-            display: flex; flex-direction: column; gap: 10px; 
-            transition: opacity 0.5s;
-            pointer-events: auto;
+            display: flex; flex-direction: column; gap: 10px; opacity: 1; transition: 0.5s;
         }
         
         .btn { 
-            padding: 12px 20px; font-size: 14px; cursor: pointer; border: none; border-radius: 30px;
-            background: rgba(255, 255, 255, 0.2); color: white; backdrop-filter: blur(5px); 
-            transition: 0.3s; outline: none;
+            padding: 15px 25px; font-size: 16px; cursor: pointer; border: none; border-radius: 5px;
+            background: #cf0652; color: white; font-weight: bold; outline: none;
         }
-        
-        .active { background-color: #cf0652; font-weight: bold; box-shadow: 0 0 10px rgba(207, 6, 82, 0.5); }
+
+        #startOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 100;
+            display: flex; justify-content: center; align-items: center;
+        }
+
         #status { 
-            color: white; text-align: right; font-size: 14px; 
-            text-shadow: 2px 2px 4px #000; 
-            background: rgba(0,0,0,0.4); padding: 5px 10px; border-radius: 5px;
+            background: rgba(0,0,0,0.6); padding: 8px; border-radius: 4px;
+            font-size: 14px; text-align: right; text-shadow: 1px 1px 2px #000;
         }
     </style>
 </head>
 <body>
 
-    <div class="controls" id="ui-controls">
-        <div id="status">Iniciando...</div>
-        <button id="loopBtn" class="btn active">Repetir Playlist: LIGADO</button>
+    <div id="startOverlay">
+        <button class="btn" onclick="iniciarTudo()">CLIQUE PARA INICIAR PLAYLIST</button>
     </div>
 
-    <video id="videoPlayer" autoplay muted playsinline>
-        Seu navegador não suporta a reprodução de vídeos.
+    <div class="controls" id="ui-controls">
+        <div id="status">Aguardando início...</div>
+        <button id="loopBtn" class="btn" style="background: rgba(255,255,255,0.2)">Loop: LIGADO</button>
+    </div>
+
+    <video id="videoPlayer" playsinline>
+        Seu navegador não suporta vídeos.
     </video>
 
     <script>
-        // 1. LISTA DE VÍDEOS (Verifique se as extensões .mp4 estão em minúsculo no GitHub)
+        // 1. LISTA DE VÍDEOS (Certifique-se de que os nomes estão idênticos no GitHub)
         const videosLocais = [
             'video1.mp4',
             'video2.mp4',
@@ -60,95 +59,85 @@
 
         let indiceAtual = 0;
         let repetirPlaylist = true;
-
         const video = document.getElementById('videoPlayer');
         const statusDisplay = document.getElementById('status');
-        const loopBtn = document.getElementById('loopBtn');
         const uiControls = document.getElementById('ui-controls');
+
+        function iniciarTudo() {
+            document.getElementById('startOverlay').style.display = 'none';
+            carregarVideo(0);
+        }
 
         function carregarVideo(index) {
             if (index >= videosLocais.length) return;
             
-            const nomeArquivo = videosLocais[index];
-            
-            // Log de depuração na tela
-            statusDisplay.textContent = `Carregando: ${nomeArquivo} (${index + 1}/${videosLocais.length})`;
-            
-            // Alterar o src diretamente no elemento video é mais eficiente que no <source>
-            video.src = nomeArquivo;
+            statusDisplay.textContent = `Carregando: ${videosLocais[index]}...`;
+
+            // Limpeza de buffer (Crucial para Smart TVs)
+            video.pause();
+            video.src = ""; 
             video.load();
 
-            // Tenta reproduzir
-            const playPromise = video.play();
-            
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    statusDisplay.textContent = `Reproduzindo: Vídeo ${index + 1}`;
-                }).catch(error => {
-                    console.error("Erro autoplay:", error);
-                    statusDisplay.textContent = "Erro: Clique na tela para iniciar";
-                });
-            }
+            // Configuração de carregamento
+            video.src = videosLocais[index];
+            video.load();
+
+            // Tentativa de Play
+            video.play().then(() => {
+                statusDisplay.textContent = `Vídeo ${index + 1} de ${videosLocais.length}`;
+            }).catch(err => {
+                statusDisplay.textContent = "Erro: Use o controle remoto e dê OK no vídeo.";
+                console.error(err);
+            });
         }
 
-        // Evento de fim de vídeo usando AddEventListener (mais robusto)
+        // Evento de fim de vídeo
         video.addEventListener('ended', () => {
             indiceAtual++;
-            
             if (indiceAtual < videosLocais.length) {
                 carregarVideo(indiceAtual);
             } else if (repetirPlaylist) {
                 indiceAtual = 0;
                 carregarVideo(indiceAtual);
-            } else {
-                statusDisplay.textContent = "Playlist finalizada.";
             }
         });
 
-        // Caso ocorra erro no carregamento do arquivo (ajuda a diagnosticar tela preta)
-        video.addEventListener('error', (e) => {
-            statusDisplay.textContent = "Erro ao carregar arquivo: " + videosLocais[indiceAtual];
-            statusDisplay.style.color = "red";
+        // Detector de Erros (Se a tela ficar preta, ele avisa o porquê)
+        video.addEventListener('error', () => {
+            const erro = video.error;
+            let msg = "Erro desconhecido";
+            if(erro.code === 4) msg = "Formato não suportado pela TV ou link quebrado.";
+            if(erro.code === 2) msg = "Erro de rede/internet.";
             
-            // Pular para o próximo vídeo após 3 segundos se este falhar
+            statusDisplay.textContent = "ERRO: " + msg;
+            statusDisplay.style.color = "red";
+
+            // Tenta pular para o próximo em 5 segundos
             setTimeout(() => {
                 statusDisplay.style.color = "white";
                 indiceAtual++;
-                if (indiceAtual < videosLocais.length || repetirPlaylist) {
-                    if (indiceAtual >= videosLocais.length) indiceAtual = 0;
-                    carregarVideo(indiceAtual);
-                }
-            }, 3000);
+                carregarVideo(indiceAtual >= videosLocais.length ? 0 : indiceAtual);
+            }, 5000);
         });
 
         // Alternar modo de repetição
-        loopBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Evita que o clique suma com os controles
+        document.getElementById('loopBtn').addEventListener('click', function() {
             repetirPlaylist = !repetirPlaylist;
-            loopBtn.textContent = repetirPlaylist ? "Repetir Playlist: LIGADO" : "Repetir Playlist: DESLIGADO";
-            loopBtn.classList.toggle('active');
+            this.textContent = repetirPlaylist ? "Loop: LIGADO" : "Loop: DESLIGADO";
+            this.style.background = repetirPlaylist ? "rgba(255,255,255,0.2)" : "#555";
         });
 
-        // Lógica para esconder os botões
+        // Controle de visibilidade da interface
         let timer;
         function mostrarControles() {
             uiControls.style.opacity = '1';
             clearTimeout(timer);
-            timer = setTimeout(() => {
-                uiControls.style.opacity = '0';
-            }, 4000);
+            timer = setTimeout(() => uiControls.style.opacity = '0', 3000);
         }
 
-        // Interação para TVs (Magic Remote ou Clique)
         document.addEventListener('mousemove', mostrarControles);
-        document.addEventListener('click', () => {
-            mostrarControles();
-            // Tenta dar play caso a TV tenha bloqueado o autoplay inicial
-            if (video.paused) video.play();
-        });
+        document.addEventListener('click', mostrarControles);
 
-        // Iniciar
-        window.onload = () => carregarVideo(indiceAtual);
     </script>
 </body>
 </html>
