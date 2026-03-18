@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TV Analista TI - Auto</title>
+    <title>TV Analista TI - Autoplay</title>
     <style>
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
@@ -12,24 +12,18 @@
         video { 
             width: 100vw; height: 100vh; 
             object-fit: contain; 
-        }
-        #status { 
-            position: absolute; bottom: 5px; left: 5px; 
-            color: rgba(255,255,255,0.2); font-size: 10px; font-family: sans-serif;
-            pointer-events: none;
+            background: #000; 
         }
     </style>
 </head>
 <body>
-
-    <div id="status">Iniciando...</div>
 
     <video id="player" autoplay muted playsinline preload="auto">
         Seu navegador não suporta vídeos.
     </video>
 
     <script>
-        // ATENÇÃO: Usei o link RAW que aponta direto para o arquivo mp4
+        // Usando o domínio RAW para garantir que a TV acesse o arquivo puro do GitHub
         const playlist = [
             'https://raw.githubusercontent.com/analista-ti/tv/main/video1.mp4',
             'https://raw.githubusercontent.com/analista-ti/tv/main/video2.mp4',
@@ -39,40 +33,35 @@
 
         let indice = 0;
         const video = document.getElementById('player');
-        const status = document.getElementById('status');
 
-        function rodar() {
+        function tocarProximo() {
             if (indice >= playlist.length) indice = 0;
-            
-            status.textContent = "Reproduzindo: " + (indice + 1);
 
-            // Limpeza de cache obrigatória para Smart TVs
+            // Limpa o buffer anterior (evita tela preta por falta de memória na TV)
             video.pause();
             video.src = "";
             video.load();
 
-            // Atribui o link direto e toca
+            // Carrega o novo vídeo da lista
             video.src = playlist[indice];
             
-            // O navegador da TV LG aceita o .play() sem clique se estiver MUDO (muted)
-            video.play().catch(e => {
-                status.textContent = "Erro: " + e.message;
-            });
+            // Força o play (mesmo com o atributo autoplay, o JS garante a troca)
+            video.play().catch(e => console.log("Erro ao reproduzir:", e));
 
             indice++;
         }
 
-        // Quando o vídeo acaba, chama o próximo automaticamente
-        video.addEventListener('ended', rodar);
+        // Quando o vídeo atual termina, chama o próximo
+        video.addEventListener('ended', tocarProximo);
 
-        // Se o link falhar ou a internet oscilar, pula para o próximo
+        // Se houver erro de rede ou codec, pula para o próximo em 3 segundos
         video.addEventListener('error', () => {
-            status.textContent = "Erro no vídeo, pulando...";
-            setTimeout(rodar, 2000);
+            setTimeout(tocarProximo, 3000);
         });
 
-        // Inicia assim que carregar a página
-        window.onload = rodar;
+        // Inicia assim que carregar
+        window.onload = tocarProximo;
+
     </script>
 </body>
 </html>
