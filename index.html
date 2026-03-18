@@ -2,79 +2,66 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>TV Analista TI - Versao Antiga</title>
+    <title>Playlist TV Analista TI</title>
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
         video { width: 100vw; height: 100vh; object-fit: contain; background: #000; }
-        #debug { 
-            position: absolute; top: 10px; left: 10px; color: #00FF00; 
-            font-family: monospace; font-size: 14px; z-index: 100;
-            background: rgba(0,0,0,0.8); padding: 10px; border: 1px solid #00FF00;
-        }
     </style>
 </head>
 <body>
 
-    <div id="debug">Console de Diagnostico:</div>
-
     <video id="player" autoplay muted playsinline></video>
 
     <script>
-        // Versao em Javascript Antigo (ES5) para compatibilidade total
+        // Usando var e function tradicional para garantir que a TV não trave
         var playlist = [
             'video1.mp4',
-            'https://raw.githubusercontent.com/analista-ti/tv/main/video1.mp4',
-            'https://www.w3schools.com/html/mov_bbb.mp4'
+            'video2.mp4',
+            'video3.mp4',
+            'video4.mp4'
         ];
 
         var indice = 0;
         var video = document.getElementById('player');
-        var debug = document.getElementById('debug');
 
-        function escreverLog(msg) {
-            debug.innerHTML += "<br>> " + msg;
-            console.log(msg);
-        }
-
-        function rodar() {
+        function reproduzir() {
             if (indice >= playlist.length) {
                 indice = 0;
             }
 
-            var urlAtual = playlist[indice];
-            escreverLog("Carregando indice " + indice + ": " + urlAtual);
-
             video.pause();
-            video.src = urlAtual;
+            // Limpa o src para liberar a memória da TV antes do próximo vídeo
+            video.src = "";
+            video.load();
+
+            // Define o novo vídeo
+            video.src = playlist[indice];
             
-            // Em TVs antigas usamos o play direto sem Promises
+            // Tenta o play de forma simples (compatível com WebOS antigo)
             try {
                 video.play();
-                escreverLog("Comando PLAY enviado.");
             } catch (e) {
-                escreverLog("Erro ao tentar tocar: " + e.message);
+                console.log("Erro ao iniciar");
             }
         }
 
-        // Eventos escritos no formato antigo
+        // Evento de fim de vídeo
         video.onended = function() {
-            escreverLog("Video terminou. Pulando...");
             indice++;
-            rodar();
+            reproduzir();
         };
 
+        // Evento de erro (pula para o próximo se o arquivo falhar)
         video.onerror = function() {
-            escreverLog("ERRO DE HARDWARE NO ARQUIVO ATUAL.");
             setTimeout(function() {
                 indice++;
-                rodar();
-            }, 4000);
+                reproduzir();
+            }, 3000);
         };
 
-        // Inicia o sistema
+        // Inicia assim que a página carregar
         window.onload = function() {
-            escreverLog("Sistema Carregado. Iniciando playlist...");
-            rodar();
+            reproduzir();
         };
     </script>
 </body>
