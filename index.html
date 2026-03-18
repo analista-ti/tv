@@ -1,1 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playlist TV LG - Local GitHub</title>
+    <style>
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background: #000; overflow: hidden; font-family: sans-serif; 
+        }
+        video { width: 100vw; height: 100vh; object-fit: contain; }
+        
+        .controls { 
+            position: absolute; top: 20px; right: 20px; z-index: 10; 
+            display: flex; flex-direction: column; gap: 10px; 
+            transition: opacity 0.5s;
+        }
+        
+        .btn { 
+            padding: 12px 20px; font-size: 14px; cursor: pointer; border: none; border-radius: 30px;
+            background: rgba(255, 255, 255, 0.2); color: white; backdrop-filter: blur(5px); 
+            transition: 0.3s; outline: none;
+        }
+        
+        .active { background-color: #cf0652; font-weight: bold; box-shadow: 0 0 10px rgba(207, 6, 82, 0.5); }
+        #status { color: white; text-align: right; font-size: 12px; text-shadow: 1px 1px 2px #000; }
+    </style>
+</head>
+<body>
 
+    <div class="controls" id="ui-controls">
+        <div id="status">A carregar...</div>
+        <button id="loopBtn" class="btn active">Repetir Playlist: LIGADO</button>
+    </div>
+
+    <video id="videoPlayer" controls autoplay>
+        <source id="videoSource" src="" type="video/mp4">
+        O seu navegador não suporta vídeos.
+    </video>
+
+    <script>
+        // 1. LISTA COM OS NOMES EXATOS DOS ARQUIVOS NO GITHUB
+        const videosLocais = [
+            'video1.mp4',
+            'video2.mp4',
+            'video3.mp4',
+            'video4.mp4'
+        ];
+
+        let indiceAtual = 0;
+        let repetirPlaylist = true;
+
+        const video = document.getElementById('videoPlayer');
+        const source = document.getElementById('videoSource');
+        const statusDisplay = document.getElementById('status');
+        const loopBtn = document.getElementById('loopBtn');
+        const uiControls = document.getElementById('ui-controls');
+
+        function carregarVideo(index) {
+            if (index >= videosLocais.length) return;
+            
+            const nomeArquivo = videosLocais[index];
+            source.src = nomeArquivo; 
+            video.load();
+            
+            // Tenta dar o play (navegadores de TV podem exigir um clique antes)
+            const playPromise = video.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(error => {
+                    console.log("Aguardando interação do usuário para iniciar.");
+                });
+            }
+            
+            statusDisplay.textContent = `Vídeo ${index + 1} de ${videosLocais.length}`;
+        }
+
+        // Passar para o próximo vídeo automaticamente
+        video.onended = function() {
+            indiceAtual++;
+            
+            if (indiceAtual < videosLocais.length) {
+                carregarVideo(indiceAtual);
+            } else if (repetirPlaylist) {
+                indiceAtual = 0; // Volta para o início
+                carregarVideo(indiceAtual);
+            }
+        };
+
+        // Alternar modo de repetição
+        loopBtn.addEventListener('click', () => {
+            repetirPlaylist = !repetirPlaylist;
+            loopBtn.textContent = repetirPlaylist ? "Repetir Playlist: LIGADO" : "Repetir Playlist: DESLIGADO";
+            loopBtn.classList.toggle('active');
+        });
+
+        // Iniciar a reprodução do primeiro vídeo
+        carregarVideo(indiceAtual);
+
+        // Lógica para esconder os botões (Magic Remote)
+        let timer;
+        function mostrarControles() {
+            uiControls.style.opacity = '1';
+            clearTimeout(timer);
+            timer = setTimeout(() => {
+                uiControls.style.opacity = '0';
+            }, 3000);
+        }
+
+        document.addEventListener('mousemove', mostrarControles);
+        document.addEventListener('click', mostrarControles);
+    </script>
+</body>
+</html>
