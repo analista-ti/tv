@@ -1,68 +1,62 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <title>Playlist TV Analista TI</title>
-    <style>
-        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
-        video { width: 100vw; height: 100vh; object-fit: contain; background: #000; }
-    </style>
-</head>
-<body>
+<script>
+    // Lista de vídeos
+    var playlist = [
+        'video1.mp4',
+        'video2.mp4',
+        'video3.mp4',
+        'video4.mp4'
+    ];
 
-    <video id="player" autoplay muted playsinline></video>
+    var indice = 0;
+    var video = document.getElementById('player');
 
-    <script>
-        // Usando var e function tradicional para garantir que a TV não trave
-        var playlist = [
-            'video1.mp4',
-            'video2.mp4',
-            'video3.mp4',
-            'video4.mp4'
-        ];
+    function reproduzirProximo() {
+        // 1. Incrementa o índice PRIMEIRO
+        indice++;
 
-        var indice = 0;
-        var video = document.getElementById('player');
-
-        function reproduzir() {
-            if (indice >= playlist.length) {
-                indice = 0;
-            }
-
-            video.pause();
-            // Limpa o src para liberar a memória da TV antes do próximo vídeo
-            video.src = "";
-            video.load();
-
-            // Define o novo vídeo
-            video.src = playlist[indice];
-            
-            // Tenta o play de forma simples (compatível com WebOS antigo)
-            try {
-                video.play();
-            } catch (e) {
-                console.log("Erro ao iniciar");
-            }
+        // 2. Se chegou no fim da lista, volta para o zero
+        if (indice >= playlist.length) {
+            indice = 0;
         }
 
-        // Evento de fim de vídeo
-        video.onended = function() {
-            indice++;
-            reproduzir();
-        };
+        // 3. Executa a carga do novo vídeo
+        carregarVideoAtual();
+    }
 
-        // Evento de erro (pula para o próximo se o arquivo falhar)
-        video.onerror = function() {
-            setTimeout(function() {
-                indice++;
-                reproduzir();
-            }, 3000);
-        };
+    function carregarVideoAtual() {
+        // Limpeza profunda para a TV não "viciar" no vídeo anterior
+        video.pause();
+        video.src = "";
+        video.load();
 
-        // Inicia assim que a página carregar
-        window.onload = function() {
-            reproduzir();
-        };
-    </script>
-</body>
-</html>
+        // Define o link do vídeo atual baseado no índice
+        video.src = playlist[indice];
+        
+        // Tenta dar o play
+        try {
+            video.play();
+            console.log("Reproduzindo indice: " + indice + " (" + playlist[indice] + ")");
+        } catch (e) {
+            // Se falhar, tenta de novo em 2 segundos
+            setTimeout(carregarVideoAtual, 2000);
+        }
+    }
+
+    // EVENTO DE FIM: Quando o vídeo acaba, chama a função que PULA
+    video.onended = function() {
+        reproduzirProximo();
+    };
+
+    // EVENTO DE ERRO: Se o vídeo travar, pula para o próximo para não parar a TV
+    video.onerror = function() {
+        setTimeout(function() {
+            reproduzirProximo();
+        }, 3000);
+    };
+
+    // INÍCIO: Quando a página abre, carrega o vídeo 0
+    window.onload = function() {
+        indice = 0; // Garante que começa no primeiro
+        carregarVideoAtual();
+    };
+</script>
