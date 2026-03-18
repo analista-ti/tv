@@ -1,62 +1,72 @@
-<script>
-    // Lista de vídeos
-    var playlist = [
-        'video1.mp4',
-        'video2.mp4',
-        'video3.mp4',
-        'video4.mp4'
-    ];
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>TV Analista TI - V2</title>
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
+        video { width: 100vw; height: 100vh; object-fit: contain; background: #000; }
+        #msg { position: absolute; top: 10px; left: 10px; color: #333; font-size: 10px; font-family: sans-serif; }
+    </style>
+</head>
+<body>
 
-    var indice = 0;
-    var video = document.getElementById('player');
+    <div id="msg">Carregando sistema...</div>
+    <video id="player" autoplay muted playsinline></video>
 
-    function reproduzirProximo() {
-        // 1. Incrementa o índice PRIMEIRO
-        indice++;
+    <script>
+        // 1. LISTA DE VÍDEOS
+        // Se você quiser "esconder", mude o nome do arquivo no GitHub de "video1.mp4" 
+        // para algo como "vid_8821.mp4" e atualize aqui embaixo.
+        var playlist = [
+            'video1.mp4',
+            'video2.mp4',
+            'video3.mp4',
+            'video4.mp4'
+        ];
 
-        // 2. Se chegou no fim da lista, volta para o zero
-        if (indice >= playlist.length) {
-            indice = 0;
-        }
+        var indice = 0;
+        var video = document.getElementById('player');
+        var msg = document.getElementById('msg');
 
-        // 3. Executa a carga do novo vídeo
-        carregarVideoAtual();
-    }
+        function tocar() {
+            if (indice >= playlist.length) {
+                indice = 0;
+            }
 
-    function carregarVideoAtual() {
-        // Limpeza profunda para a TV não "viciar" no vídeo anterior
-        video.pause();
-        video.src = "";
-        video.load();
+            msg.innerHTML = "Lendo arquivo: " + (indice + 1);
 
-        // Define o link do vídeo atual baseado no índice
-        video.src = playlist[indice];
-        
-        // Tenta dar o play
-        try {
+            // IMPORTANTE: Limpeza para TV LG não travar
+            video.pause();
+            video.src = "";
+            video.load();
+
+            // Adicionamos um "caractere aleatório" no fim do link (?t=...) 
+            // para forçar a TV a baixar o vídeo novo e não usar o cache velho
+            video.src = playlist[indice] + "?t=" + new Date().getTime();
+            
             video.play();
-            console.log("Reproduzindo indice: " + indice + " (" + playlist[indice] + ")");
-        } catch (e) {
-            // Se falhar, tenta de novo em 2 segundos
-            setTimeout(carregarVideoAtual, 2000);
         }
-    }
 
-    // EVENTO DE FIM: Quando o vídeo acaba, chama a função que PULA
-    video.onended = function() {
-        reproduzirProximo();
-    };
+        // Evento de fim de vídeo
+        video.onended = function() {
+            indice++;
+            tocar();
+        };
 
-    // EVENTO DE ERRO: Se o vídeo travar, pula para o próximo para não parar a TV
-    video.onerror = function() {
-        setTimeout(function() {
-            reproduzirProximo();
-        }, 3000);
-    };
+        // Evento de erro: se o link quebrar ou a net cair, tenta o próximo em 5 segundos
+        video.onerror = function() {
+            msg.innerHTML = "Erro no arquivo " + (indice + 1) + ". Pulando...";
+            setTimeout(function() {
+                indice++;
+                tocar();
+            }, 5000);
+        };
 
-    // INÍCIO: Quando a página abre, carrega o vídeo 0
-    window.onload = function() {
-        indice = 0; // Garante que começa no primeiro
-        carregarVideoAtual();
-    };
-</script>
+        // Inicia tudo
+        window.onload = function() {
+            tocar();
+        };
+    </script>
+</body>
+</html>
